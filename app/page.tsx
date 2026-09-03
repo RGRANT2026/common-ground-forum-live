@@ -25,8 +25,12 @@ export default function Home() {
   const [saved, setSaved] = useState<number[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showComposer, setShowComposer] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [toast, setToast] = useState("");
   const [newSpace, setNewSpace] = useState("");
+  const [search, setSearch] = useState("");
+  const [userSpaces, setUserSpaces] = useState<Space[]>([]);
 
   const notify = (message: string) => {
     setToast(message);
@@ -40,8 +44,9 @@ export default function Home() {
     <main className="shell">
       <header className="topbar">
         <a className="brand" href="#"><span className="brand-mark">✦</span><span>common<span className="brand-dot">.</span>ground</span></a>
-        <div className="top-search"><span>⌕</span><input aria-label="Search" placeholder="Search conversations, spaces, people" /></div>
-        <div className="top-actions"><button className="icon-button" aria-label="Notifications">♧<i /></button><button className="avatar">AR</button></div>
+        <div className="top-search"><span>⌕</span><input aria-label="Search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search conversations, spaces, people" /></div>
+        <div className="top-actions"><button className="icon-button" aria-label="Notifications" onClick={() => setShowNotifications(!showNotifications)}>♧<i /></button><button className="avatar" onClick={() => notify("Your profile is ready to personalize")}>AR</button></div>
+        {showNotifications && <div className="notification-popover"><strong>Notifications</strong><p><span>✦</span> A mediator is available in Civic Commons.</p><p><span>♡</span> Your reflection received 12 thoughtful replies.</p></div>}
       </header>
 
       <div className="layout">
@@ -50,20 +55,22 @@ export default function Home() {
           <nav className="nav" aria-label="Main navigation">
             <a className="nav-item active" href="#"><span>⌂</span> Home</a>
             <a className="nav-item" href="#rules"><span>✧</span> Healthy debate</a>
-            <a className="nav-item" href="#"><span>◷</span> Your activity</a>
+            <button className="nav-item nav-button" onClick={() => notify(`${liked.length + saved.length} interactions saved in your activity`)}><span>◷</span> Your activity</button>
           </nav>
           <div className="sidebar-label"><span>Your spaces</span><button onClick={() => notify("Space manager coming soon")}>＋</button></div>
-          <div className="space-list">{spaces.map((space) => <a className="space-link" href="#" key={space.name}><span className={`space-icon ${space.color}`}>{space.icon}</span><span>{space.name}<small>{space.members}</small></span></a>)}</div>
+          <div className="space-list">{[...spaces, ...userSpaces].map((space) => <button className="space-link" onClick={() => { setSearch(space.name); notify(`Showing conversations in ${space.name}`); }} key={space.name}><span className={`space-icon ${space.color}`}>{space.icon}</span><span>{space.name}<small>{space.members}</small></span></button>)}</div>
           <div className="sidebar-foot"><div className="mini-mentor">☼</div><div><strong>Need a reset?</strong><p>Try a 2-minute pause before replying.</p><button onClick={() => notify("Two-minute timer started")}>Start a timer <span>→</span></button></div></div>
         </aside>
 
         <section className="feed">
           <div className="welcome"><div><p className="eyebrow">THURSDAY, SEPTEMBER 3</p><h1>Good conversations<br /><em>start with curiosity.</em></h1><p className="welcome-copy">A place to think out loud, test ideas, and leave people feeling heard.</p></div><div className="welcome-art"><span>✦</span><div /></div></div>
           <div className="tabs" role="tablist">{["For you", "Following", "New & rising"].map((tab) => <button role="tab" aria-selected={activeTab === tab} className={activeTab === tab ? "selected" : ""} key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>)}</div>
-          <div className="composer"><div className="avatar small">AR</div><button onClick={() => notify("Composer opened — choose a space to begin")}>What are you thinking about?</button><div className="composer-actions"><button onClick={() => notify("Source prompt added")}>⌁ <span>Source</span></button><button onClick={() => notify("A 10-minute timebox is ready")}>◷ <span>Timebox</span></button></div></div>
+          {search && <div className="search-status">Showing results for <strong>“{search}”</strong> <button onClick={() => setSearch("")}>Clear</button></div>}
+          <div className="composer"><div className="avatar small">AR</div><button onClick={() => setShowComposer(true)}>What are you thinking about?</button><div className="composer-actions"><button onClick={() => setShowComposer(true)}>⌁ <span>Source</span></button><button onClick={() => notify("A 10-minute timebox is ready")}>◷ <span>Timebox</span></button></div></div>
 
-          <Post id={1} space="The Learning Loop" spaceIcon="🧠" time="24 min ago" title="What’s a belief you changed your mind about?" body="I used to think changing your mind meant you weren’t confident. Now I see it as a sign that you’re paying attention. What’s something you see differently today—and what helped you get there?" tags={["#reflection", "#growth-mindset"]} liked={liked.includes(1)} saved={saved.includes(1)} onLike={() => toggle(liked, setLiked, 1)} onSave={() => toggle(saved, setSaved, 1)} onReport={() => setShowReport(true)} />
-          <Post id={2} space="Climate & Community" spaceIcon="🌱" time="1 hr ago" title="Should cities charge for downtown parking?" body="I’m collecting perspectives for a neighborhood forum. If you support a fee, what should the revenue fund? If you oppose it, what alternative would reduce congestion?" tags={["#cities", "#policy"]} liked={liked.includes(2)} saved={saved.includes(2)} onLike={() => toggle(liked, setLiked, 2)} onSave={() => toggle(saved, setSaved, 2)} onReport={() => setShowReport(true)} debate />
+          {(!search || "The Learning Loop What’s a belief you changed my mind reflection growth mindset".toLowerCase().includes(search.toLowerCase())) && <Post id={1} space="The Learning Loop" spaceIcon="🧠" time="24 min ago" title="What’s a belief you changed your mind about?" body="I used to think changing your mind meant you weren’t confident. Now I see it as a sign that you’re paying attention. What’s something you see differently today—and what helped you get there?" tags={["#reflection", "#growth-mindset"]} liked={liked.includes(1)} saved={saved.includes(1)} onLike={() => toggle(liked, setLiked, 1)} onSave={() => toggle(saved, setSaved, 1)} onReport={() => setShowReport(true)} onReply={() => setShowComposer(true)} />}
+          {(!search || "Climate & Community Should cities charge downtown parking cities policy".toLowerCase().includes(search.toLowerCase())) && <Post id={2} space="Climate & Community" spaceIcon="🌱" time="1 hr ago" title="Should cities charge for downtown parking?" body="I’m collecting perspectives for a neighborhood forum. If you support a fee, what should the revenue fund? If you oppose it, what alternative would reduce congestion?" tags={["#cities", "#policy"]} liked={liked.includes(2)} saved={saved.includes(2)} onLike={() => toggle(liked, setLiked, 2)} onSave={() => toggle(saved, setSaved, 2)} onReport={() => setShowReport(true)} onReply={() => setShowComposer(true)} debate />}
+          {search && !["The Learning Loop What’s a belief you changed my mind reflection growth mindset", "Climate & Community Should cities charge downtown parking cities policy"].some((value) => value.toLowerCase().includes(search.toLowerCase())) && <div className="empty-state"><strong>No conversations found</strong><p>Try a broader search, or start a new thread.</p><button className="outline-button" onClick={() => setShowComposer(true)}>Start a conversation</button></div>}
         </section>
 
         <aside className="right-rail" id="rules">
@@ -73,15 +80,16 @@ export default function Home() {
         </aside>
       </div>
 
-      {showCreate && <Modal title="Create a new space" onClose={() => setShowCreate(false)}><p className="modal-subtitle">Give people a welcoming place to explore one shared question.</p><label>Space name<input autoFocus value={newSpace} onChange={(e) => setNewSpace(e.target.value)} placeholder="e.g. Food for thought" /></label><label>What will you explore?<textarea placeholder="A short description of the conversations you want to host." /></label><button className="primary-button" onClick={() => { setShowCreate(false); notify(newSpace ? `"${newSpace}" is ready to set up` : "Let’s name your space first"); }}>Continue <span>→</span></button></Modal>}
+      {showCreate && <Modal title="Create a new space" onClose={() => setShowCreate(false)}><p className="modal-subtitle">Give people a welcoming place to explore one shared question.</p><label>Space name<input autoFocus value={newSpace} onChange={(e) => setNewSpace(e.target.value)} placeholder="e.g. Food for thought" /></label><label>What will you explore?<textarea placeholder="A short description of the conversations you want to host." /></label><button className="primary-button" onClick={() => { if (!newSpace.trim()) { notify("Add a name for your space"); return; } setUserSpaces([...userSpaces, { icon: "✦", name: newSpace.trim(), members: "Just getting started", color: "mint" }]); setNewSpace(""); setShowCreate(false); notify("Your new space is live"); }}>Create space <span>→</span></button></Modal>}
+      {showComposer && <Modal title="Start a thoughtful thread" onClose={() => setShowComposer(false)}><p className="modal-subtitle">A clear question and a little context make room for better replies.</p><label>Choose a space<select defaultValue="The Learning Loop"><option>The Learning Loop</option><option>Climate & Community</option><option>Better Cities</option><option>Civic Commons</option></select></label><label>Your question<textarea autoFocus placeholder="What would you like to explore together?" /></label><label>Evidence or context (optional)<textarea placeholder="Share a source, lived experience, or what would change your mind." /></label><button className="primary-button" onClick={() => { setShowComposer(false); notify("Thread saved as a draft — ready when you are"); }}>Save draft <span>→</span></button></Modal>}
       {showReport && <Modal title="Report with care" onClose={() => setShowReport(false)}><p className="modal-subtitle">Help us understand what happened. Reports are private and reviewed by our moderation team.</p><div className="report-options">{["Harassment or personal attack", "Misinformation or missing context", "Hate or discrimination", "Something else"].map((option) => <button key={option} onClick={() => { setShowReport(false); notify("Thanks — your report was sent for review"); }}>{option}<span>›</span></button>)}</div></Modal>}
       {toast && <div className="toast" role="status">✓ {toast}</div>}
     </main>
   );
 }
 
-function Post({ id, space, spaceIcon, time, title, body, tags, liked, saved, onLike, onSave, onReport, debate }: { id: number; space: string; spaceIcon: string; time: string; title: string; body: string; tags: string[]; liked: boolean; saved: boolean; onLike: () => void; onSave: () => void; onReport: () => void; debate?: boolean }) {
-  return <article className="post"><div className="post-meta"><span className="post-space">{spaceIcon} {space}</span><span>·</span><span>{time}</span><button className="more" aria-label="More options">•••</button></div><h2>{title}</h2><p className="post-body">{body}</p><div className="tag-row">{tags.map((tag) => <span key={tag}>{tag}</span>)}{debate && <span className="guided-tag">Guided debate</span>}</div><div className="post-footer"><button className={liked ? "action liked" : "action"} onClick={onLike}>♡ <span>{liked ? "13" : "12"}</span></button><button className="action" onClick={() => window.alert("Reply composer opened")}>◌ <span>{debate ? "28" : "19"} replies</span></button><button className={saved ? "action saved" : "action"} onClick={onSave}>⚑ <span>{saved ? "Saved" : "Save"}</span></button><button className="action report" onClick={onReport}>⚐ <span>Report</span></button></div></article>;
+function Post({ id, space, spaceIcon, time, title, body, tags, liked, saved, onLike, onSave, onReport, onReply, debate }: { id: number; space: string; spaceIcon: string; time: string; title: string; body: string; tags: string[]; liked: boolean; saved: boolean; onLike: () => void; onSave: () => void; onReport: () => void; onReply: () => void; debate?: boolean }) {
+  return <article className="post"><div className="post-meta"><span className="post-space">{spaceIcon} {space}</span><span>·</span><span>{time}</span><button className="more" aria-label="More options" onClick={() => onReport()}>•••</button></div><h2>{title}</h2><p className="post-body">{body}</p><div className="tag-row">{tags.map((tag) => <span key={tag}>{tag}</span>)}{debate && <span className="guided-tag">Guided debate</span>}</div><div className="post-footer"><button className={liked ? "action liked" : "action"} onClick={onLike}>♡ <span>{liked ? "13" : "12"}</span></button><button className="action" onClick={onReply}>◌ <span>{debate ? "28" : "19"} replies</span></button><button className={saved ? "action saved" : "action"} onClick={onSave}>⚑ <span>{saved ? "Saved" : "Save"}</span></button><button className="action report" onClick={onReport}>⚐ <span>Report</span></button></div></article>;
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
